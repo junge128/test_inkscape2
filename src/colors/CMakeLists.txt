@@ -1,0 +1,70 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+set(colors_SRC
+	cms/profile.cpp
+	cms/system.cpp
+	cms/transform.cpp
+	color.cpp
+	document-cms.cpp
+	dragndrop.cpp
+	manager.cpp
+	parser.cpp
+	printer.cpp
+	color-set.cpp
+	spaces/base.cpp
+	spaces/cms.cpp
+	spaces/cmyk.cpp
+	spaces/components.cpp
+	spaces/gray.cpp
+	spaces/hsl.cpp
+	spaces/hsluv.cpp
+	spaces/hsv.cpp
+	spaces/lab.cpp
+	spaces/lch.cpp
+	spaces/linear-rgb.cpp
+	spaces/luv.cpp
+	spaces/okhsl.cpp
+	spaces/oklab.cpp
+	spaces/oklch.cpp
+	spaces/named.cpp
+	spaces/rgb.cpp
+	spaces/xyz.cpp
+	utils.cpp
+	xml-color.cpp
+
+	# -------
+	# Headers
+	cms/profile.h
+	cms/system.h
+	cms/transform.h
+	color.h
+	document-cms.h
+	dragndrop.h
+	manager.h
+	parser.h
+	printer.h
+	color-set.h
+	spaces/base.h
+	spaces/cms.h
+	spaces/cmyk.h
+	spaces/components.h
+	spaces/enum.h
+	spaces/gray.h
+	spaces/hsl.h
+	spaces/hsluv.h
+	spaces/hsv.h
+	spaces/lab.h
+	spaces/lch.h
+	spaces/linear-rgb.h
+	spaces/luv.h
+	spaces/okhsl.h
+	spaces/oklab.h
+	spaces/oklch.h
+	spaces/named.h
+	spaces/rgb.h
+	spaces/xyz.h
+	utils.h
+	xml-color.h
+)
+
+add_inkscape_source("${colors_SRC}")

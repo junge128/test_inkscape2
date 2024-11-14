@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Disable closing file descriptors because the snap confinement has some
+# that it doesn't want us to close
+diff --git a/src/extension/implementation/script.cpp b/src/extension/implementation/script.cpp
+index a3896d41b6..88c6b826d5 100644
+--- a/src/extension/implementation/script.cpp
++++ b/src/extension/implementation/script.cpp
+@@ -796,7 +796,7 @@ int Script::execute (const std::list<std::string> &in_command,
+     try {
+         Glib::spawn_async_with_pipes(working_directory, // working directory
+                                      argv,  // arg v
+-                                     static_cast<Glib::SpawnFlags>(0), // no flags
++                                     Glib::SPAWN_LEAVE_DESCRIPTORS_OPEN,
+                                      sigc::slot<void ()>(),
+                                      &_pid,          // Pid
+                                      nullptr,           // STDIN

@@ -1,0 +1,7 @@
+Libdepixelize pixelart tracing library.
+
+This code must be kept in sync with our "upstream" project
+https://gitlab.com/inkscape/devel/libdepixelize
+
+Any change must first (or in parallel) be submitted to the upstream project
+and ideally be tested there, independently of Inkscape.

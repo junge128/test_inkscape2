@@ -1,0 +1,225 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+name: inkscape
+adopt-info: inkscape
+license: GPL-3.0
+confinement: strict
+base: core22
+compression: lzo
+
+plugs:
+  dot-config-inkscape:
+    interface: personal-files
+    write: [ $HOME/.config/inkscape ]
+  gtk-3-themes:
+    interface: content
+    target: $SNAP/data-dir/themes
+    default-provider: gtk-common-themes
+  icon-themes:
+    interface: content
+    target: $SNAP/data-dir/icons
+    default-provider: gtk-common-themes
+
+slots:
+  inkscape-dbus:
+    interface: dbus
+    bus: session
+    name: org.inkscape.Inkscape
+
+assumes: [ command-chain ]
+
+parts:
+  inkscape:
+    plugin: cmake
+    source: .
+    cmake-parameters:
+      - '-DCMAKE_INSTALL_PREFIX='
+    build-packages:
+      - build-essential
+      - cmake
+      - cython3
+      - g++
+      - libart-2.0-dev
+      - libboost-all-dev
+      - libcdr-dev
+      - libdouble-conversion-dev
+      - libgc-dev
+      - libglib2.0-dev
+      - libgsl-dev
+      - libgspell-1-dev
+      - libgtest-dev
+      - libgtk-3-dev
+      - libgtkmm-3.0-dev
+      - libgtksourceview-4-dev
+      - libharfbuzz-dev
+      - liblcms2-dev
+      - libmagick++-dev
+      - libpango1.0-dev
+      - libpoppler-glib-dev
+      - libpoppler-private-dev
+      - libpotrace-dev
+      - librevenge-dev
+      - libreadline-dev
+      - libsigc++-2.0-dev
+      - libtool
+      - libvisio-dev
+      - libwpg-dev
+      - libxml-parser-perl
+      - libxml2-dev
+      - libxslt1-dev
+      - ragel
+      - pkg-config
+      - zlib1g-dev
+    stage-packages:
+      - heif-gdk-pixbuf
+      - gir1.2-gtk-3.0
+      - libatkmm-1.6-1v5
+      - libboost-filesystem1.74.0
+      - libcairomm-1.0-1v5
+      - libcdr-0.1-1
+      - libdouble-conversion3
+      - libgc1
+      - libgdk-pixbuf2.0-0
+      - libglibmm-2.4-1v5
+      - libglib2.0-bin
+      - libgsl27
+      - libgslcblas0
+      - libgspell-1-2
+      - libgtkmm-3.0-1v5
+      - libgtksourceview-4-common
+      - libgtksourceview-4-0
+      - liblcms2-2
+      - libmagick++-6.q16-8
+      - libpangomm-1.4-1v5
+      - libpoppler-glib8
+      - libpotrace0
+      - libpsl5
+      - librevenge-0.0-0
+      - libvisio-0.1-1
+      - libwpg-0.3-3
+      - libxslt1.1
+      - aspell
+      - imagemagick
+      - libimage-magick-perl
+      - libwmf-bin
+      - transfig
+      - libsvg-perl
+      - libxml-xql-perl
+      - python3-pil
+      - python3-gi
+      - python3-gi-cairo
+    prime:
+      - -lib/inkscape/*.a
+      - -*canberra*so* # We don't have sound permissions anyway
+      - -usr/lib/*/gtk-2.0
+    override-build: |
+      patch -p1 --batch --directory=$SNAPCRAFT_PART_SRC --input=$SNAPCRAFT_PART_SRC/snap/local/filedialog-native.patch
+      patch -p1 --batch --directory=$SNAPCRAFT_PART_SRC --input=$SNAPCRAFT_PART_SRC/snap/local/glib-spawn-no-close.patch
+      sed -i.bak -e 's|Icon=${INKSCAPE_ICONPATH}|Icon=${SNAP}/share/inkscape/branding/inkscape.svg|g' $SNAPCRAFT_PART_SRC/org.inkscape.Inkscape.desktop.template
+      snapcraftctl build
+      INKSCAPE_VERSION=`g++ -I${SNAPCRAFT_PART_SRC}/src ${SNAPCRAFT_PART_BUILD}/src/inkscape-version.cpp ${SNAPCRAFT_PROJECT_DIR}/snap/local/print-inkscape-version.cpp -o print-inkscape-version && ./print-inkscape-version`
+      echo "Inkscape Version: ${INKSCAPE_VERSION}"
+      snapcraftctl set-version "${INKSCAPE_VERSION}"
+    override-prime: |
+      snapcraftctl prime
+      sed -i "s|_have.*$||" $SNAPCRAFT_PRIME/share/bash-completion/completions/inkscape
+    parse-info: [ share/metainfo/org.inkscape.Inkscape.appdata.xml ]
+    after: [python-deps] # Grab the network stuff first
+  python-deps:
+    plugin: python
+    source: .
+    build-packages:
+      - python3-pip
+    override-build: |
+      export PYTHONUSERBASE=${SNAPCRAFT_PART_INSTALL}
+      pip3 install poetry
+      ( for dir in `find ${SNAPCRAFT_PROJECT_DIR}/share/extensions -name pyproject.toml -exec dirname {} \;`; do
+          ( cd $dir && poetry show -n --only main --no-ansi ) | cut -d " " -f 1
+        done ) | sort -u | xargs pip3 install --user --no-compile --find-links
+    stage-packages:
+      - optipng
+      - pstoedit
+#     - texlive-latex-base
+  snap-helpers:
+    plugin: dump
+    source: snap/local/scripts
+  desktop-helpers:
+    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
+    source-subdir: gtk
+    plugin: make
+    make-parameters: ["FLAVOR=gtk3"]
+    build-packages:
+      - libgtk-3-dev
+      - locales
+    stage-packages:
+      - libxkbcommon0  # XKB_CONFIG_ROOT
+      - fonts-ubuntu
+      - dmz-cursor-theme
+      - light-themes
+      - adwaita-icon-theme
+      - gnome-themes-standard
+      - shared-mime-info
+      - libgtk-3-0
+      - libgtk-3-bin
+      - libglib2.0-bin
+      - locales-all
+      - libc-bin
+      - xdg-user-dirs
+      - ibus-gtk3
+      - libibus-1.0-5
+      - fcitx-frontend-gtk3
+      - librsvg2-common # SVG pixbuf loader
+    prime:
+      - -*canberra*so* # We don't have sound permissions anyway
+      - -usr/lib/*/gtk-2.0
+    override-prime: |
+      snapcraftctl prime
+      glib-compile-schemas ${SNAPCRAFT_PRIME}/usr/share/glib-2.0/schemas/
+      LOCPATH=${SNAPCRAFT_PRIME}/usr/lib/locale locale-gen
+    after: [inkscape, snap-helpers, python-deps] # Last so we compile all the schemas
+  gtk-locales:
+    plugin: nil
+    override-pull: |
+      set -eux
+      apt-get download "language-pack-*-base"
+    override-build: |
+      set -eux
+      for deb in *.deb; do dpkg-deb -x $deb .; done
+      find usr/share/locale-langpack -type f -not -name "gtk30*.mo" -and -not -name "glib*.mo" -and -not -name "gdk*.mo" -and -not -name "gspell*.mo" -and -not -name "coreutils*.mo" -delete
+      mkdir -p $SNAPCRAFT_PART_INSTALL/usr/share
+      cp -r usr/share/locale-langpack $SNAPCRAFT_PART_INSTALL/usr/share/
+
+apps:
+  inkscape:
+    command: bin/inkscape
+    command-chain: [ bin/desktop-launch, inkscape-variables, private-fontcache ]
+    plugs:
+      - desktop
+      - desktop-legacy
+      - gsettings
+      - wayland
+      - x11
+      - unity7
+      - dot-config-inkscape
+      - raw-usb # plotter support
+      - network # for extension manager
+    slots:
+      - inkscape-dbus
+    desktop: share/applications/org.inkscape.Inkscape.desktop
+    common-id: org.inkscape.Inkscape
+    completer: share/bash-completion/completions/inkscape
+  viewer:
+    command: bin/inkview
+    command-chain: [ bin/desktop-launch, inkscape-variables, private-fontcache ]
+    plugs:
+      - desktop
+      - desktop-legacy
+      - gsettings
+      - wayland
+      - x11
+      - unity7
+      - dot-config-inkscape
+
+hooks:
+  configure:
+    plugs:
+      - desktop
